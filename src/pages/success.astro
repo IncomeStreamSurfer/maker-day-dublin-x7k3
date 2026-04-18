@@ -1,0 +1,22 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+export const prerender = false;
+
+const sessionId = Astro.url.searchParams.get('session_id');
+---
+<Layout title="You're in — Maker Day Dublin">
+  <section class="mx-auto max-w-2xl px-6 py-24 text-center">
+    <div class="display text-5xl md:text-6xl font-bold">You're in.</div>
+    <p class="mt-6 text-lg opacity-80 leading-relaxed">
+      Your ticket for Maker Day Dublin is confirmed. We've just emailed your ticket code — show it at the door on Saturday 14 June. If it doesn't land in the next few minutes, check spam and then ping <a class="underline" href="mailto:hello@makerdaydublin.ie">hello@makerdaydublin.ie</a>.
+    </p>
+    <div class="mt-10 flex justify-center gap-3 flex-wrap">
+      <a href="/#schedule" class="btn btn-ghost">See the schedule</a>
+      <a href="/" class="btn btn-primary">Back to homepage</a>
+    </div>
+    {sessionId && (
+      <p class="mt-10 text-xs opacity-50 font-mono">ref: {sessionId}</p>
+    )}
+  </section>
+</Layout>

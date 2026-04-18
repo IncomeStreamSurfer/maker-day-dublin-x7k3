@@ -1,0 +1,82 @@
+---
+import '../styles/global.css';
+
+export interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Maker Day Dublin — 14 June',
+  description = 'A one-day Dublin conference for hardware designers, open-source roboticists, and craft technologists. 14 June. 8 talks, 4 speakers, one great day.',
+} = Astro.props;
+
+const siteUrl = import.meta.env.PUBLIC_SITE_URL || 'https://maker-day-dublin.vercel.app';
+const canonical = new URL(Astro.url.pathname, siteUrl).toString();
+
+const eventJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: 'Maker Day Dublin',
+  startDate: '2025-06-14T09:00:00+01:00',
+  endDate: '2025-06-14T18:00:00+01:00',
+  eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+  eventStatus: 'https://schema.org/EventScheduled',
+  location: {
+    '@type': 'Place',
+    name: 'Maker Hall',
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: '12 Hanover Quay',
+      addressLocality: 'Dublin',
+      postalCode: 'D02',
+      addressCountry: 'IE',
+    },
+  },
+  description,
+  url: siteUrl,
+  offers: [
+    { '@type': 'Offer', name: 'Early Bird', price: '45', priceCurrency: 'GBP', availability: 'https://schema.org/LimitedAvailability', url: `${siteUrl}/#tickets` },
+    { '@type': 'Offer', name: 'Standard',   price: '65', priceCurrency: 'GBP', availability: 'https://schema.org/InStock',            url: `${siteUrl}/#tickets` },
+  ],
+};
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+    <script type="application/ld+json" set:html={JSON.stringify(eventJsonLd)} />
+  </head>
+  <body class="antialiased">
+    <slot />
+    <footer class="mt-24 border-t border-black/10">
+      <div class="mx-auto max-w-6xl px-6 py-10 flex flex-col md:flex-row gap-4 md:items-center md:justify-between text-sm opacity-80">
+        <div>© {new Date().getFullYear()} Maker Day Dublin. Built by makers, for makers.</div>
+        <div class="flex gap-5">
+          <a href="#schedule" class="hover:underline">Schedule</a>
+          <a href="#speakers" class="hover:underline">Speakers</a>
+          <a href="#tickets" class="hover:underline">Tickets</a>
+          <a href="mailto:hello@makerdaydublin.ie" class="hover:underline">Contact</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

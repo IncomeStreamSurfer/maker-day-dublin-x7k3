@@ -1,0 +1,191 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { supabase, type Talk, type Speaker, type Product } from '../lib/supabase';
+
+export const prerender = false;
+
+const [{ data: talksRaw }, { data: speakersRaw }, { data: productsRaw }] = await Promise.all([
+  supabase.from('mdd_talks').select('*').order('sort_order'),
+  supabase.from('mdd_speakers').select('*').order('sort_order'),
+  supabase.from('mdd_products').select('*').eq('active', true).order('sort_order'),
+]);
+
+const talks = (talksRaw || []) as Talk[];
+const speakers = (speakersRaw || []) as Speaker[];
+const products = (productsRaw || []) as Product[];
+
+const bySlug = new Map(speakers.map((s) => [s.slug, s]));
+const money = (p: number, c: string) =>
+  new Intl.NumberFormat('en-GB', { style: 'currency', currency: c.toUpperCase() }).format(p / 100);
+---
+<Layout>
+  <!-- NAV -->
+  <nav class="mx-auto max-w-6xl px-6 pt-6 flex items-center justify-between">
+    <a href="/" class="flex items-center gap-2 font-semibold">
+      <span class="inline-block h-3 w-3 rounded-full" style="background: var(--color-accent)"></span>
+      <span class="display text-lg">Maker Day Dublin</span>
+    </a>
+    <div class="hidden md:flex gap-6 text-sm">
+      <a href="#about" class="hover:underline">About</a>
+      <a href="#schedule" class="hover:underline">Schedule</a>
+      <a href="#speakers" class="hover:underline">Speakers</a>
+      <a href="#tickets" class="hover:underline">Tickets</a>
+    </div>
+    <a href="#tickets" class="btn btn-primary text-sm !px-4 !py-2">Get a ticket</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="mx-auto max-w-6xl px-6 pt-16 md:pt-24 pb-16">
+    <div class="flex flex-wrap gap-3 text-sm opacity-70 mb-6">
+      <span>Saturday 14 June</span>
+      <span>·</span>
+      <span>Maker Hall, Dublin 2</span>
+      <span>·</span>
+      <span>8 talks · 4 speakers · 1 day</span>
+    </div>
+    <h1 class="display text-5xl md:text-7xl font-bold leading-[1.02] max-w-4xl">
+      A one-day celebration of <span style="color: var(--color-accent)">people who build things</span> with their hands.
+    </h1>
+    <p class="mt-8 text-lg md:text-xl max-w-2xl leading-relaxed opacity-80">
+      Maker Day Dublin gathers hardware designers, open-source roboticists, craft technologists and founders for eight talks, a working maker fair, a hands-on macropad workshop, and a proper after-party in the docklands.
+    </p>
+    <div class="mt-10 flex flex-wrap gap-3">
+      <a href="#tickets" class="btn btn-primary">Get a ticket</a>
+      <a href="#schedule" class="btn btn-ghost">See the schedule</a>
+    </div>
+
+    <!-- stat strip -->
+    <div class="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6">
+      {[
+        { k: '14 June', v: 'One day' },
+        { k: '8', v: 'Talks & panels' },
+        { k: '4', v: 'Headline speakers' },
+        { k: '20+', v: 'Makers at the fair' },
+      ].map((s) => (
+        <div class="card p-5">
+          <div class="display text-3xl font-bold">{s.k}</div>
+          <div class="text-sm opacity-70 mt-1">{s.v}</div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about" class="border-t border-black/10">
+    <div class="mx-auto max-w-6xl px-6 py-20 grid md:grid-cols-3 gap-10">
+      <div>
+        <div class="text-xs tracking-[0.2em] uppercase opacity-60">About</div>
+        <h2 class="display text-3xl font-bold mt-2">Not another tech conference.</h2>
+      </div>
+      <div class="md:col-span-2 space-y-5 text-lg leading-relaxed opacity-85">
+        <p>
+          Ireland has a quiet maker renaissance happening — small hardware studios, robotics labs, craft-tech hybrids, indie electronics shops. Maker Day Dublin is a day to pull that community into one room.
+        </p>
+        <p>
+          Expect talks that are technical but not lecture-shaped, a working indoor maker fair over lunch, a hands-on macropad workshop you leave with a working keyboard from, and an after-party at a local brewery.
+        </p>
+        <p>
+          We keep the day small (300 attendees) so conversations carry weight. One hall. One schedule. No tracks to agonise over.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCHEDULE -->
+  <section id="schedule" class="bg-[var(--color-ink)] text-[var(--color-paper)]">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+      <div class="flex items-end justify-between flex-wrap gap-4 mb-10">
+        <div>
+          <div class="text-xs tracking-[0.2em] uppercase opacity-60">Schedule</div>
+          <h2 class="display text-3xl md:text-4xl font-bold mt-2">Saturday 14 June</h2>
+        </div>
+        <div class="opacity-70 text-sm">All times IST · Doors open 09:00</div>
+      </div>
+      <div class="space-y-2">
+        {talks.length === 0 && <p class="opacity-70">Schedule loading — check back soon.</p>}
+        {talks.map((t) => {
+          const sp = t.speaker_slug ? bySlug.get(t.speaker_slug) : null;
+          return (
+            <div class="grid grid-cols-1 md:grid-cols-[140px_1fr_200px] gap-4 md:gap-8 border-b border-white/10 py-5 hover:bg-white/[0.03] transition px-2 -mx-2 rounded-lg">
+              <div class="display text-xl font-semibold" style="color: var(--color-accent)">
+                {t.start_time}<span class="opacity-40">–{t.end_time}</span>
+              </div>
+              <div>
+                <div class="text-lg font-semibold">{t.title}</div>
+                {t.description && <div class="opacity-70 text-sm mt-1 leading-relaxed">{t.description}</div>}
+              </div>
+              <div class="text-sm opacity-70">
+                {sp && <div><span class="opacity-60">with</span> {sp.name}</div>}
+                {t.room && <div class="opacity-50">{t.room}</div>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+
+  <!-- SPEAKERS -->
+  <section id="speakers" class="border-t border-black/10">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+      <div class="flex items-end justify-between flex-wrap gap-4 mb-10">
+        <div>
+          <div class="text-xs tracking-[0.2em] uppercase opacity-60">Speakers</div>
+          <h2 class="display text-3xl md:text-4xl font-bold mt-2">Four voices, one day.</h2>
+        </div>
+        <div class="opacity-70 text-sm max-w-sm">More announced before the event — and every speaker joins the closing panel.</div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {speakers.map((s) => (
+          <article class="card p-6 flex flex-col">
+            <div class="aspect-square w-full rounded-xl overflow-hidden mb-5" style="background: var(--color-paper)">
+              {s.photo_url && <img src={s.photo_url} alt={s.name} loading="lazy" class="w-full h-full object-cover" />}
+            </div>
+            <div class="display text-xl font-bold">{s.name}</div>
+            <div class="text-sm opacity-70 mt-1">{s.role}{s.company ? ` · ${s.company}` : ''}</div>
+            {s.bio && <p class="text-sm mt-3 opacity-85 leading-relaxed">{s.bio}</p>}
+            <div class="mt-4 flex gap-3 text-sm">
+              {s.twitter && <a class="underline opacity-70 hover:opacity-100" href={`https://twitter.com/${s.twitter}`}>@{s.twitter}</a>}
+              {s.website && <a class="underline opacity-70 hover:opacity-100" href={s.website}>Website</a>}
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- TICKETS -->
+  <section id="tickets" class="bg-[var(--color-paper)] border-t border-black/10">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+      <div class="text-center max-w-2xl mx-auto">
+        <div class="text-xs tracking-[0.2em] uppercase opacity-60">Tickets</div>
+        <h2 class="display text-3xl md:text-5xl font-bold mt-2">Secure your spot.</h2>
+        <p class="mt-4 opacity-80">One ticket covers all talks, lunch from local traders, workshop entry (first-come), and the after-party. We keep the day to 300 attendees.</p>
+      </div>
+      <div class="mt-12 grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        {products.map((p) => (
+          <div class="card p-8 flex flex-col">
+            <div class="flex items-baseline justify-between">
+              <div class="display text-2xl font-bold">{p.name}</div>
+              <div class="display text-3xl font-bold" style="color: var(--color-accent)">{money(p.price_pence, p.currency)}</div>
+            </div>
+            {p.description && <p class="mt-3 opacity-80">{p.description}</p>}
+            <ul class="mt-5 space-y-2 text-sm opacity-90">
+              <li>✓ Entry to all 8 sessions</li>
+              <li>✓ Lunch from Irish traders</li>
+              <li>✓ Workshop access (first-come)</li>
+              <li>✓ After-party at Hanover Brewing</li>
+            </ul>
+            <form method="POST" action="/api/checkout" class="mt-6">
+              <input type="hidden" name="product_id" value={p.id} />
+              <button class={`btn ${p.id === 'early-bird' ? 'btn-primary' : 'btn-ghost'} w-full`}>
+                Buy {p.name} — {money(p.price_pence, p.currency)}
+              </button>
+            </form>
+          </div>
+        ))}
+      </div>
+      <p class="text-center text-xs opacity-60 mt-8">Secure checkout powered by Stripe · Instant email confirmation with your ticket code.</p>
+    </div>
+  </section>
+</Layout>
